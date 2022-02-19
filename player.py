@@ -1,6 +1,6 @@
 import zmq
 import sys
-
+from ui import *
 
 class Player:
     context = zmq.Context()
@@ -18,19 +18,25 @@ class Player:
             'url': self.url_where_listening_to_the_controller
         })
         controller_response = socket.recv_json()
-        if controller_response['response']:
-            self.play()
+        self.play(controller_response['response'])
 
-    def play(self):
+    def play(self, msg):
         socket_player = self.context.socket(zmq.REP)
         socket_player.bind(f"tcp://*:{self.url_where_listening_to_the_controller}")
-        controller_response = socket_player.recv_json()
-        if controller_response['response']:
-            print('funciona')
-            socket_player.send_json({
-                'response' : 'funciona'
-            })
-
+        while True:
+            UI.clear_console()
+            print(msg)
+            print("\nanother player's turn, wait your turn\n")
+            controller_response = socket_player.recv_json()
+            if not controller_response['finish_game']:
+                if controller_response['your_turn']:
+                    total = UI.throw_dice()
+                    socket_player.send_json(UI.json_prototype(self.name, False, total))
+                else:
+                    pass
 
 if __name__ == '__main__':
-    Player('Miguel', sys.argv[1], sys.argv[2]).enter_the_game()
+    if sys.argv[1] and sys.argv[2] and sys.argv[3]:
+        Player(sys.argv[1], sys.argv[2], sys.argv[3]).enter_the_game()
+    else:
+        print('arguments missing')
