@@ -1,18 +1,31 @@
-import  os
+import os
 import random
 import time
+
 
 class UI:
 
     @staticmethod
-    def json_prototype(name, finish_game = False, your_turn = False, dice_result = 0, ):
+    def print_table(table):
+        for row in table:
+            for column in row:
+                print(column, end=' ')
+            print('\n')
+
+    @staticmethod
+    def json_prototype(name, finish_game=False, your_turn=False, dice_result=0, dice_1=0, dice_2=0):
         json = {
-            'name' : name,
+            'name': name,
             'finish_game': finish_game,
             'your_turn': your_turn,
-            'dice_result': dice_result
+            'dice_result': dice_result,
+            'dice_1': dice_1,
+            'dice_2': dice_2
         }
         return json
+
+    def draw_board(self, row: int):
+        pass
 
     @staticmethod
     def throw_dice():
