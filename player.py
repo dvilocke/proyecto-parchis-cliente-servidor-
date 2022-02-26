@@ -4,8 +4,6 @@ import zmq
 
 from ui import *
 
-ALLOWED_COLORS = ['red', 'yellow', 'blue', 'green']
-
 
 class Player:
     context = zmq.Context()
@@ -14,6 +12,16 @@ class Player:
         self.color = color
         self.controller_url = controller_url
         self.url_where_listening_to_the_controller = url_where_listening_to_the_controller
+
+        # important variables
+        self.start_number = any
+        self.figure = any
+
+    def move(self, total):
+        for _ in range(total):
+            self.start_number += 1
+            if self.start_number > 31:
+                self.start_number = 0
 
     def enter_the_game(self):
         socket = self.context.socket(zmq.REQ)
@@ -24,6 +32,8 @@ class Player:
         })
         controller_response = socket.recv_json()
         if controller_response['response']:
+            self.figure = controller_response['figure']
+            self.start_number = controller_response['start_number']
             self.play()
         else:
             print('color not allowed or was already chosen by another user')
@@ -34,19 +44,25 @@ class Player:
         socket_player.bind(f"tcp://*:{self.url_where_listening_to_the_controller}")
         while True:
             UI.clear_console()
-            print(f"\nWelcome to the game, player with color:{self.color}\n")
+            print(f"\nWelcome to the game, player with color:{self.color}, your figure is:{self.figure}\n")
             print("\nanother player's turn, wait your turn\n")
             controller_response = socket_player.recv_json()
             if not controller_response['finish_game']:
                 if controller_response['your_turn']:
-                    total = UI.throw_dice()
-                    socket_player.send_json(UI.json_prototype(self.color, False, total))
+                    dice_1, total = UI.roll_only_one_dice()
+                    self.move(total=total)
+
+                    socket_player.send_json(
+                        UI.json_prototype(color=self.color, dice_result=total, dice_1=dice_1, total=total,
+                                          where_to_put_it=self.start_number)
+                    )
+
                 else:
                     pass
 
 
 if __name__ == '__main__':
     if sys.argv[1] and sys.argv[2] and sys.argv[3]:
-        Player(sys.argv[1], sys.argv[2], sys.argv[3]).enter_the_game()
+        Player(sys.argv[1].lower(), sys.argv[2], sys.argv[3]).enter_the_game()
     else:
         print('arguments missing')

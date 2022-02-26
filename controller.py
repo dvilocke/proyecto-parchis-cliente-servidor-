@@ -1,5 +1,6 @@
 import zmq
 
+from board import *
 from ui import *
 
 
@@ -13,6 +14,7 @@ class Controller:
 
     def __init__(self):
         self.players = [self.context.socket(zmq.REQ) for _ in range(self.PLAYER_LIMIT)]
+        self.board = Board()
 
     def check_color(self, color) -> bool:
         return color in self.ALLOWED_COLORS and color not in self.color_user
@@ -27,7 +29,9 @@ class Controller:
                 self.players[counter].connect(f"tcp://localhost:{url['url']}")
                 self.color_user.append(url['color'])
                 socket.send_json({
-                    'response': True
+                    'response': True,
+                    'start_number': self.board.get_start_criteria(url['color']),
+                    'figure': self.board.get_figure(url['color'])
                 })
                 counter += 1
             else:
@@ -43,6 +47,17 @@ class Controller:
                 print(f"player's turn:{self.color_user[color]}")
                 socket_user.send_json(UI.json_prototype(self.color_user[color], self.finish_game, True))
                 player_response = socket_user.recv_json()
+                print(f"{self.color_user[color]} had a result of {player_response['total']} on his dice\n")
+
+                self.board.delete_log()
+                self.board.update_table(player_response['color'], player_response['where_to_put_it'])
+
+                # print log messages
+                for msg in self.board.logs:
+                    print(msg, end='\n')
+                    time.sleep(2)
+
+                UI.print_table(self.board.drawing_board)
 
 
 if __name__ == '__main__':
