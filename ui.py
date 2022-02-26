@@ -15,7 +15,7 @@ class UI:
 
     @staticmethod
     def json_prototype(color: str, finish_game=False, your_turn=False, dice_result=0, dice_1=0, dice_2=0, total=0,
-                       where_to_put_it=0):
+                       where_to_put_it=0, board=''):
         json = {
             'color': color,
             'finish_game': finish_game,
@@ -24,7 +24,8 @@ class UI:
             'dice_1': dice_1,
             'dice_2': dice_2,
             'total': total,
-            'where_to_put_it': where_to_put_it
+            'where_to_put_it': where_to_put_it,
+            'board': board
         }
         return json
 
@@ -47,7 +48,7 @@ class UI:
     def roll_only_one_dice():
         dice_1 = 0
         while True:
-            UI.clear_console()
+            # UI.clear_console()
             option = int(input('press (1) to roll a die:'))
             if option == 1:
                 dice_1 = random.randint(1, 6)

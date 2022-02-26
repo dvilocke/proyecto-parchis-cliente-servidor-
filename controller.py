@@ -44,7 +44,7 @@ class Controller:
     def play(self):
         while not self.finish_game:
             for color, socket_user in enumerate(self.players):
-                print(f"player's turn:{self.color_user[color]}")
+                print(f"\nplayer's turn:{self.color_user[color]}")
                 socket_user.send_json(UI.json_prototype(self.color_user[color], self.finish_game, True))
                 player_response = socket_user.recv_json()
                 print(f"{self.color_user[color]} had a result of {player_response['total']} on his dice\n")
@@ -58,6 +58,11 @@ class Controller:
                     time.sleep(2)
 
                 UI.print_table(self.board.drawing_board)
+
+                # send all players on board
+                for socket in self.players:
+                    socket.send_json(UI.json_prototype(' ', False, False, board=self.board.drawing_board))
+                    print(socket.recv_string(), end='\n')
 
 
 if __name__ == '__main__':

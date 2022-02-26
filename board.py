@@ -1,13 +1,13 @@
 class Board:
     drawing_board = [
         ['#', ' ', ' ', '*', '?', '*', ' ', ' ', '#'],
-        ['#', ' ', ' ', '1', ' ', '*', ' ', ' ', '#'],
+        ['#', ' ', ' ', '1', ' ', '?', ' ', ' ', '#'],
         ['#', '#', '#', '*', ' ', '*', '#', '#', '#'],
-        ['*', '*', '*', '*', ' ', '*', '*', '4', '*'],
+        ['*', '?', '*', '*', ' ', '*', '*', '4', '*'],
         ['?', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '?'],
-        ['*', '2', '*', '*', ' ', '*', '*', '*', '*'],
+        ['*', '2', '*', '*', ' ', '*', '*', '?', '*'],
         ['#', ' ', ' ', '*', ' ', '*', ' ', ' ', '#'],
-        ['#', ' ', ' ', '*', ' ', '3', ' ', ' ', '#'],
+        ['#', ' ', ' ', '?', ' ', '3', ' ', ' ', '#'],
         ['#', '#', '#', '*', '?', '*', '#', '#', '#'],
     ]
 
@@ -16,6 +16,9 @@ class Board:
     logs = []
 
     INSURANCE_POLICIES = [31, 1, 5, 7, 9, 13, 15, 17, 21, 23, 25, 29]
+
+    INSURANCE_COORDINATE = [(0, 4), (4, 0), (8, 4), (4, 8), (1, 3), (3, 1), (5, 1), (7, 3), (7, 5), (5, 7), (3, 7),
+                            (1, 5)]
 
     GENERAL_COORDINATES = {
         'red': [
@@ -84,7 +87,7 @@ class Board:
     }
 
     def __init__(self):
-        pass
+        self.a_player_is_eliminated = False
 
     def get_figure(self, color):
         # this function returns the figure corresponding to each player
@@ -104,31 +107,54 @@ class Board:
         # function to eat other chips
         offset_coordinate = self.list_with_chordates[where_to_put_it]
         x, y = offset_coordinate
-        if self.drawing_board[x][y] != '*' and self.drawing_board[x][y] != figure:
-            # a chip is there
-            figure_to_remove = self.drawing_board[x][y]
-            color_to_remove = self.__get_color(figure_to_remove)
+        if self.drawing_board[x][y] != '*' and self.drawing_board[x][y] != figure and self.drawing_board[x][y] != '?':
+            if not (x, y) in self.INSURANCE_COORDINATE:
+                # a chip is there
+                figure_to_remove = self.drawing_board[x][y]
+                color_to_remove = self.__get_color(figure_to_remove)
 
-            self.__add_log(msg=f"the {color} kill color:{color_to_remove}, figure:{figure_to_remove}")
+                self.__add_log(msg=f"the {color} kill color:{color_to_remove}, figure:{figure_to_remove}")
 
-            self.jail.append(color_to_remove)
+                self.jail.append(color_to_remove)
 
-            self.__add_log(msg=f"the color {color_to_remove} was sent to jail")
+                self.__add_log(msg=f"the color {color_to_remove} was sent to jail")
 
-            self.__delete_current_position(coordinate=(x, y))
+                self.__delete_current_position(coordinate=(x, y))
 
+            else:
+                self.__add_log(msg=f"the {color} don't kill anyone")
         else:
             self.__add_log(msg=f"the {color} don't kill anyone")
 
     def __delete_current_position(self, coordinate):
         # function to delete the current position, that is, where the figure is located I put another character
-        self.drawing_board[coordinate[0]][coordinate[1]] = '*'
+        if coordinate in self.INSURANCE_COORDINATE:
+            self.drawing_board[coordinate[0]][coordinate[1]] = '?'
+        else:
+            self.drawing_board[coordinate[0]][coordinate[1]] = '*'
 
     def __move_player(self, color, where_to_put_it):
         offset_coordinate = self.list_with_chordates[where_to_put_it]
         x, y = offset_coordinate
         self.drawing_board[x][y] = self.get_figure(color)
         self.__add_log(msg=f"the {color} moved to the coordinate:{offset_coordinate}")
+
+        # get how long it takes to reach your goal
+
+        self.__add_log(
+            msg=f"the {color}, ({self.__goal(color, where_to_put_it)}) squares are missing to reach the finish line")
+
+    def __goal(self, color, where_to_put_it):
+        # get how long it takes to reach your goal
+        counter_1 = where_to_put_it
+        counter_2 = 0
+        while counter_1 != self.GENERAL_COORDINATES[color][0]['full_turn']:
+            counter_1 += 1
+            if counter_1 > 31:
+                counter_1 = 0
+            counter_2 += 1
+
+        return counter_2
 
     def __search_chip(self, figure):
         # function to find the tile on the board
@@ -166,6 +192,8 @@ class Board:
 
         else:
             # there is no such figure on the board, it means he is in jail
+
+            # se debe revisar esto por que eliminacion esta teniendo problemas
             pass
 
 # UI.print_table(Board().drawing_board)
